@@ -1,0 +1,47 @@
+#!/usr/bin/env python3
+
+import configparser
+import os
+import sys
+import boto3
+import inquirer
+
+
+def get_mfa_serials():
+    client = boto3.client('iam')
+    devices = client.list_mfa_devices()['MFADevices']
+    return [device['SerialNumber'] for device in devices]
+
+
+def choose_mfa_serial():
+    serials = get_mfa_serials()
+    num_serials = len(serials)
+
+    if (num_serials == 0):
+        sys.exit('No MFA devices have been set up.')
+    elif (num_serials == 1):
+        return serials[0]
+    else:
+        return inquirer.list_input("Select MFA device", choices=serials)
+
+
+def get_mfa_serial():
+    return os.getenv('AWS_MFA_DEVICE_SERIAL', choose_mfa_serial())
+
+
+def get_session_token():
+    client = boto3.client('sts')
+
+    serial = get_mfa_serial()
+    code = input("MFA code: ")
+
+    response = client.get_session_token(
+        DurationSeconds=3600,
+        SerialNumber=serial,
+        TokenCode=code,
+    )
+    return response['Credentials']['SessionToken']
+
+
+if __name__ == '__main__':
+    print(get_session_token())
