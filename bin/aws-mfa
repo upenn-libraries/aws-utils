@@ -43,7 +43,16 @@ def get_credentials():
     return response['Credentials']
 
 
-def save_session_token():
+def create_mfa_config():
+    credentials = get_credentials()
+    return {
+        'aws_access_key_id': credentials['AccessKeyId'],
+        'aws_secret_access_key': credentials['SecretAccessKey'],
+        'aws_session_token': credentials['SessionToken'],
+    }
+
+
+def save_mfa_profile():
     config_path = '/root/.aws/credentials'
     config = configparser.ConfigParser()
     config.read(config_path)
@@ -52,12 +61,7 @@ def save_session_token():
     if (not config.has_section(aws_profile)):
         config.add_section(aws_profile)
 
-    credentials = get_credentials()
-    mfa_config = {
-        'aws_access_key_id': credentials['AccessKeyId'],
-        'aws_secret_access_key': credentials['SecretAccessKey'],
-        'aws_session_token': credentials['SessionToken'],
-    }
+    mfa_config = create_mfa_config()
     config[aws_profile].update(mfa_config)
 
     with open(config_path, 'w') as config_file:
@@ -65,4 +69,4 @@ def save_session_token():
 
 
 if __name__ == '__main__':
-    save_session_token()
+    save_mfa_profile()
