@@ -53,7 +53,7 @@ def create_mfa_config():
 
 
 def save_mfa_profile():
-    config_path = '/root/.aws/credentials'
+    config_path = '{}/.aws/credentials'.format(os.environ['HOME'])
     config = configparser.ConfigParser()
     config.read(config_path)
 
