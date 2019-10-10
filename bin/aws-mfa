@@ -66,6 +66,7 @@ def save_mfa_profile():
 
     with open(config_path, 'w') as config_file:
         config.write(config_file)
+        print('Updated temporary credentials in {}'.format(config_path))
 
 
 if __name__ == '__main__':
