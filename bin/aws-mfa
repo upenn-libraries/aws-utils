@@ -29,7 +29,7 @@ def get_mfa_serial():
     return os.getenv('AWS_MFA_DEVICE_SERIAL', choose_mfa_serial())
 
 
-def get_session_token():
+def get_credentials():
     client = boto3.client('sts')
 
     serial = get_mfa_serial()
@@ -40,8 +40,29 @@ def get_session_token():
         SerialNumber=serial,
         TokenCode=code,
     )
-    return response['Credentials']['SessionToken']
+    return response['Credentials']
+
+
+def save_session_token():
+    config_path = '/root/.aws/credentials'
+    config = configparser.ConfigParser()
+    config.read(config_path)
+
+    aws_profile = os.environ.get('AWS_PROFILE', 'mfa')
+    if (not config.has_section(aws_profile)):
+        config.add_section(aws_profile)
+
+    credentials = get_credentials()
+    mfa_config = {
+        'aws_access_key_id': credentials['AccessKeyId'],
+        'aws_secret_access_key': credentials['SecretAccessKey'],
+        'aws_session_token': credentials['SessionToken'],
+    }
+    config[aws_profile].update(mfa_config)
+
+    with open(config_path, 'w') as config_file:
+        config.write(config_file)
 
 
 if __name__ == '__main__':
-    print(get_session_token())
+    save_session_token()
