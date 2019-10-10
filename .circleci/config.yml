@@ -1,0 +1,19 @@
+version: 2.1
+
+orbs:
+  docker-publish: upenn-libraries/docker-publish@0.1.0
+  gitleaks: upenn-libraries/gitleaks@0.1.1
+
+workflows:
+  build_test_and_deploy:
+    jobs:
+      - gitleaks/check_local:
+          image: quay.io/upennlibraries/gitleaks:v2.0.0
+          options: --redact --branch=${CIRCLE_BRANCH}
+      - docker-publish/publish:
+          context: quay.io
+          registry: quay.io
+          image: upennlibraries/aws-utils
+          label_prefix: edu.upenn.library
+          requires:
+            - gitleaks/check_local
